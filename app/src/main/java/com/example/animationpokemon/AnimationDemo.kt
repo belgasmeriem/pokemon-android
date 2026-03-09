@@ -33,16 +33,10 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Timings
-// ─────────────────────────────────────────────────────────────────────────────
 private const val LIQUID_MS       = 700L
 private const val LIQUID_BULGE_MS = 300
 private const val PAUSE_APRES_MS  = 130L
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Data
-// ─────────────────────────────────────────────────────────────────────────────
 data class Pokemon(
     val nom: String,
     val imageRes: Int,
@@ -99,9 +93,7 @@ val listePokemon = listOf(
     )
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Liquid path — double bezier S-wave
-// ─────────────────────────────────────────────────────────────────────────────
+
 fun buildLiquidPath(size: Size, progress: Float, bulge: Float, direction: Int): Path {
     val w = size.width; val h = size.height
     val bulgeAmt = w * 0.38f * bulge * (1f - progress * 0.80f)
@@ -134,9 +126,7 @@ fun typeColor(type: String): Color = when (type) {
 
 fun loopIndex(current: Int, delta: Int, size: Int): Int = (current + delta + size) % size
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main screen
-// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun PokemonTransitionScreen(indexInitial: Int = 0) {
     val scope = rememberCoroutineScope()
@@ -226,14 +216,12 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
                 )
             }
     ) {
-        // Background gradient
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(listOf(pokemon.couleurFond, pokemon.couleurAccent, pokemon.couleurDark))
             )
         )
 
-        // Pulsing circle top-right
         Box(
             modifier = Modifier.size(440.dp).align(Alignment.TopEnd)
                 .offset(x = 110.dp, y = (-90).dp).scale(bgScale),
@@ -242,7 +230,6 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
             Box(Modifier.fillMaxSize().clip(CircleShape).background(Color.White.copy(alpha = bgAlpha)))
         }
 
-        // Pulsing circle bottom-left
         Box(
             modifier = Modifier.size(300.dp).align(Alignment.BottomStart)
                 .offset(x = (-70).dp, y = 90.dp).scale(1f / bgScale),
@@ -251,7 +238,6 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
             Box(Modifier.fillMaxSize().clip(CircleShape).background(Color.White.copy(alpha = bgAlpha * 0.6f)))
         }
 
-        // Liquid transition
         if (progress.value > 0f) {
             Box(
                 modifier = Modifier.fillMaxSize().graphicsLayer {
@@ -263,7 +249,6 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
             ) { PageFondSeul(listePokemon[indexSuivant]) }
         }
 
-        // Page
         if (progress.value == 0f && !progress.isRunning) {
             PokemonPageAnimee(
                 pokemon            = pokemon,
@@ -280,7 +265,6 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
             )
         }
 
-        // Dialog
         if (dialogOuvert) {
             Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(0.62f)))
             PokedexDialogCard(pokemon = pokemon, onClose = { dialogOuvert = false })
@@ -288,9 +272,7 @@ fun PokemonTransitionScreen(indexInitial: Int = 0) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Background during transition
-// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun PageFondSeul(pokemon: Pokemon) {
     Box(
@@ -317,9 +299,7 @@ fun PageFondSeul(pokemon: Pokemon) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Pokédex dialog
-// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun PokedexDialogCard(pokemon: Pokemon, onClose: () -> Unit) {
     val slideIn = remember { Animatable(400f) }
@@ -428,9 +408,7 @@ fun InfoRowDialog(label: String, value: String) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Pokemon page — updateTransition pour Animation Preview panneau
-// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun PokemonPageAnimee(
     pokemon: Pokemon,
@@ -445,8 +423,7 @@ fun PokemonPageAnimee(
     pokeballLeftRot: Float    = 0f,
     pokeballLeftScale: Float  = 1f
 ) {
-    // ── animStarted : false → true après PAUSE_APRES_MS ──────────────────────
-    // C'est le seul état qui pilote updateTransition
+
     var animStarted by remember(pageKey) { mutableStateOf(false) }
 
     LaunchedEffect(pageKey) {
@@ -455,10 +432,8 @@ fun PokemonPageAnimee(
         animStarted = true
     }
 
-    // ── updateTransition — visible dans le panneau Animation Preview ──────────
     val transition = updateTransition(targetState = animStarted, label = "pokemon_entry")
 
-    // Nom — descend + scale up + fondu
     val nomOffsetY by transition.animateFloat(
         label = "nom_offsetY",
         transitionSpec = { tween(820, easing = LinearOutSlowInEasing) }
@@ -474,7 +449,6 @@ fun PokemonPageAnimee(
         transitionSpec = { tween(700, easing = FastOutSlowInEasing) }
     ) { if (it) 1f else 0.6f }
 
-    // Image — rebond (monte, dépasse, retombe) + scale up + fondu
     val imageOffsetY by transition.animateFloat(
         label = "image_offsetY",
         transitionSpec = {
@@ -497,14 +471,13 @@ fun PokemonPageAnimee(
         transitionSpec = { tween(620, easing = FastOutSlowInEasing) }
     ) { if (it) 1f else 0.65f }
 
-    // Bouton — lève depuis le bas avec délai 80ms simulé + fondu
     val boutonOffsetY by transition.animateFloat(
         label = "bouton_offsetY",
         transitionSpec = {
             if (targetState) keyframes {
                 durationMillis = 900
                 200f at 0
-                200f at 80  using LinearOutSlowInEasing   // délai 80ms simulé
+                200f at 80  using LinearOutSlowInEasing
                 0f   at 900
             } else tween(300)
         }
@@ -516,13 +489,12 @@ fun PokemonPageAnimee(
             if (targetState) keyframes {
                 durationMillis = 600
                 0f at 0
-                0f at 80    // invisible pendant 80ms
+                0f at 80
                 1f at 600
             } else tween(300)
         }
     ) { if (it) 1f else 0f }
 
-    // ── Animations infinies — inchangées ─────────────────────────────────────
     val infiniteTransition = rememberInfiniteTransition(label = "float")
     val floatY by infiniteTransition.animateFloat(
         initialValue = -14f, targetValue = 14f, label = "floatY",
@@ -545,12 +517,9 @@ fun PokemonPageAnimee(
         animationSpec = infiniteRepeatable(tween(1800, easing = FastOutSlowInEasing), RepeatMode.Reverse)
     )
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // UI — identique à l'original, seuls les .value remplacés par transition
-    // ─────────────────────────────────────────────────────────────────────────
+
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // Corner pokeball top-right
         Box(
             modifier = Modifier.size(440.dp).align(Alignment.TopEnd)
                 .offset(x = 110.dp, y = (-90).dp),
@@ -563,7 +532,6 @@ fun PokemonPageAnimee(
             )
         }
 
-        // Corner pokeball bottom-left
         Box(
             modifier = Modifier.size(300.dp).align(Alignment.BottomStart)
                 .offset(x = (-70).dp, y = 30.dp),
@@ -576,7 +544,6 @@ fun PokemonPageAnimee(
             )
         }
 
-        // Big center bg pokeball
         Image(
             painterResource(R.drawable.pokeball), null,
             modifier = Modifier.size(360.dp).align(Alignment.Center).offset(y = 30.dp)
@@ -600,15 +567,14 @@ fun PokemonPageAnimee(
                 )
             }
 
-            // Nom + badges — utilisent les valeurs de transition
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.graphicsLayer {
-                    translationY = nomOffsetY   // ← transition
-                    alpha        = nomAlpha     // ← transition
-                    scaleX       = nomScale     // ← transition
-                    scaleY       = nomScale     // ← transition
+                    translationY = nomOffsetY
+                    alpha        = nomAlpha
+                    scaleX       = nomScale
+                    scaleY       = nomScale
                 }
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -652,7 +618,6 @@ fun PokemonPageAnimee(
                 }
             }
 
-            // Image — utilise les valeurs de transition
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -663,21 +628,20 @@ fun PokemonPageAnimee(
                     contentDescription = pokemon.nom,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxWidth(0.80f).aspectRatio(1f).graphicsLayer {
-                        translationY = imageOffsetY + floatY   // ← transition + float infini
-                        alpha        = imageAlpha              // ← transition
-                        scaleX       = imageScale              // ← transition
-                        scaleY       = imageScale              // ← transition
+                        translationY = imageOffsetY + floatY
+                        alpha        = imageAlpha
+                        scaleX       = imageScale
+                        scaleY       = imageScale
                     }
                 )
             }
 
-            // Bouton + dots — utilisent les valeurs de transition
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(18.dp),
                 modifier = Modifier.graphicsLayer {
-                    translationY = boutonOffsetY   // ← transition
-                    alpha        = boutonAlpha     // ← transition
+                    translationY = boutonOffsetY
+                    alpha        = boutonAlpha
                 }
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -712,7 +676,6 @@ fun PokemonPageAnimee(
             }
         }
 
-        // Pokéball RIGHT
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd).padding(end = 14.dp).size(64.dp)
@@ -727,7 +690,6 @@ fun PokemonPageAnimee(
             )
         }
 
-        // Pokéball LEFT
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart).padding(start = 14.dp).size(64.dp)
@@ -755,9 +717,7 @@ fun InfoRow(label: String, value: String) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Previews
-// ─────────────────────────────────────────────────────────────────────────────
+
 @Preview(showBackground = true, showSystemUi = true, name = "Bulbasaur")
 @Composable fun PreviewBulbasaur() { PokemonTransitionScreen(0) }
 
